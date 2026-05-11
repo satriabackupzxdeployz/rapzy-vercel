@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Rapzy-GPT — AI dari Masa Depan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#050508;--sf:#0d0d14;--card:#11111c;--bd:#1e1e32;
+  --a:#6c63ff;--a2:#00e5ff;--a3:#ff4f7b;
+  --tx:#e8e8f0;--mu:#5a5a78;
+  --glow:rgba(108,99,255,.32);--glow2:rgba(0,229,255,.18);
+  --fh:'Syne',sans-serif;--fm:'JetBrains Mono',monospace;
+  --r:14px;--tr:.24s cubic-bezier(.4,0,.2,1);
+}
+html,body{height:100%;background:var(--bg);color:var(--tx);font-family:var(--fm);overflow:hidden}
+
+/* NOISE */
+#noise{position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:.35;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.05'/%3E%3C/svg%3E")}
+
+/* BG */
+.g-grid{position:fixed;inset:0;z-index:0;opacity:.16;
+  background-image:linear-gradient(var(--bd) 1px,transparent 1px),linear-gradient(90deg,var(--bd) 1px,transparent 1px);
+  background-size:60px 60px;
+  -webkit-mask-image:radial-gradient(ellipse 70% 70% at 50% 50%,black,transparent);
+  mask-image:radial-gradient(ellipse 70% 70% at 50% 50%,black,transparent)}
+.blob{position:fixed;border-radius:50%;filter:blur(110px);pointer-events:none;z-index:0}
+.b1{width:520px;height:520px;top:-160px;left:-110px;background:radial-gradient(circle,rgba(108,99,255,.16),transparent 70%)}
+.b2{width:420px;height:420px;bottom:-110px;right:-90px;background:radial-gradient(circle,rgba(0,229,255,.1),transparent 70%)}
+.b3{width:300px;height:300px;top:40%;right:10%;background:radial-gradient(circle,rgba(255,79,123,.07),transparent 70%)}
+
+/* PAGE SYSTEM */
+.page{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transform:translateY(20px);
+  transition:opacity .55s ease,transform .55s ease;z-index:1}
+.page.on{opacity:1;pointer-events:all;transform:none}
+
+/* ══ LOADING ══ */
+#pg-load{flex-direction:column;gap:28px;align-items:center}
+.ld-logo{
+  font-family:var(--fh);font-size:clamp(3rem,9vw,6rem);font-weight:800;letter-spacing:-.04em;
+  background:linear-gradient(135deg,var(--a) 0%,var(--a2) 52%,var(--a3) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:logopulse 2.2s ease-in-out infinite;position:relative}
+.ld-logo::after{content:attr(data-t);position:absolute;inset:0;
+  background:inherit;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  filter:blur(22px);opacity:.45;animation:logopulse 2.2s ease-in-out infinite reverse}
+@keyframes logopulse{0%,100%{opacity:1}50%{opacity:.62}}
+.ld-tag{font-size:.76rem;color:var(--mu);letter-spacing:.16em;text-transform:uppercase}
+.orb{position:relative;width:112px;height:112px;flex-shrink:0}
+.orb::before,.orb::after{content:'';position:absolute;border-radius:50%;border:2px solid transparent}
+.orb::before{inset:0;border-top-color:var(--a);border-right-color:var(--a);
+  animation:spin 1.15s linear infinite;box-shadow:0 0 20px var(--glow)}
+.orb::after{inset:15px;border-bottom-color:var(--a2);border-left-color:var(--a2);
+  animation:spin 1.9s linear infinite reverse;box-shadow:0 0 12px var(--glow2)}
+.orb-c{position:absolute;inset:29px;border-radius:50%;
+  background:radial-gradient(circle,var(--a),transparent 70%);
+  opacity:.65;animation:breathe 2s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes breathe{0%,100%{transform:scale(1);opacity:.65}50%{transform:scale(1.38);opacity:1}}
+.bar-w{width:min(300px,78vw);height:3px;background:var(--bd);border-radius:99px;overflow:hidden}
+.bar-f{height:100%;background:linear-gradient(90deg,var(--a),var(--a2));border-radius:99px;
+  box-shadow:0 0 10px var(--glow);width:0%;transition:width .12s linear}
+.ld-st{font-size:.73rem;color:var(--mu);letter-spacing:.07em;min-height:1.3em;text-align:center}
+
+/* ══ LOGIN ══ */
+.login-card{
+  width:min(408px,92vw);background:var(--card);border:1px solid var(--bd);border-radius:24px;
+  padding:46px 40px;position:relative;overflow:hidden;z-index:2;
+  box-shadow:0 32px 80px rgba(0,0,0,.5),0 0 0 1px rgba(108,99,255,.1);
+  animation:slideup .6s cubic-bezier(.4,0,.2,1) both}
+.login-card::before{content:'';position:absolute;top:0;left:18%;right:18%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--a),var(--a2),transparent)}
+@keyframes slideup{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
+.badge{display:inline-flex;align-items:center;gap:6px;
+  background:rgba(108,99,255,.1);border:1px solid rgba(108,99,255,.28);
+  border-radius:99px;padding:4px 13px;font-size:.67rem;color:var(--a);
+  letter-spacing:.12em;text-transform:uppercase;margin-bottom:22px}
+.bdot{width:6px;height:6px;border-radius:50%;background:var(--a);animation:blink 1.5s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.l-title{font-family:var(--fh);font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin-bottom:6px;
+  background:linear-gradient(135deg,#fff 25%,var(--a2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.l-sub{color:var(--mu);font-size:.77rem;margin-bottom:32px;line-height:1.68}
+.fg{margin-bottom:16px}
+.fl{display:block;font-size:.67rem;color:var(--mu);letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px}
+.fi{width:100%;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);
+  padding:13px 16px;color:var(--tx);font-family:var(--fm);font-size:.84rem;outline:none;
+  transition:border-color var(--tr),box-shadow var(--tr)}
+.fi::placeholder{color:var(--mu)}
+.fi:focus{border-color:var(--a);box-shadow:0 0 0 3px rgba(108,99,255,.13),0 0 20px rgba(108,99,255,.08)}
+.btn-login{width:100%;padding:14px;background:linear-gradient(135deg,var(--a),#4540d4);
+  border:none;border-radius:var(--r);color:#fff;font-family:var(--fh);font-size:.95rem;font-weight:700;
+  cursor:pointer;letter-spacing:.02em;margin-top:8px;position:relative;overflow:hidden;
+  transition:transform var(--tr),box-shadow var(--tr)}
+.btn-login::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.15),transparent 70%);
+  transform:translateX(-100%);transition:transform .5s ease}
+.btn-login:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(108,99,255,.44)}
+.btn-login:hover::after{transform:translateX(100%)}
+.btn-login:active{transform:none;box-shadow:none}
+.l-err{background:rgba(255,79,123,.1);border:1px solid rgba(255,79,123,.3);border-radius:10px;
+  padding:10px 14px;color:var(--a3);font-size:.77rem;margin-top:13px;display:none}
+
+/* ══ CHAT ══ */
+#pg-chat{align-items:stretch;justify-content:stretch;padding:0}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:256px;background:var(--sf);
+  border-right:1px solid var(--bd);display:flex;flex-direction:column;
+  padding:22px 14px;gap:10px;z-index:20;
+  transform:translateX(-100%);transition:transform var(--tr)}
+.sidebar.open{transform:translateX(0)}
+.sb-logo{font-family:var(--fh);font-size:1.28rem;font-weight:800;
+  background:linear-gradient(135deg,var(--a),var(--a2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  padding:3px 6px;margin-bottom:6px}
+.new-c{display:flex;align-items:center;gap:8px;padding:11px 13px;
+  background:rgba(108,99,255,.1);border:1px dashed rgba(108,99,255,.3);border-radius:var(--r);
+  color:var(--a);font-family:var(--fm);font-size:.78rem;cursor:pointer;
+  transition:background var(--tr),border-color var(--tr)}
+.new-c:hover{background:rgba(108,99,255,.2);border-color:var(--a)}
+.sb-hist{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px}
+.sb-hist::-webkit-scrollbar{width:3px}
+.sb-hist::-webkit-scrollbar-thumb{background:var(--bd);border-radius:99px}
+.hi{padding:8px 11px;border-radius:9px;font-size:.72rem;color:var(--mu);cursor:pointer;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  transition:background var(--tr),color var(--tr)}
+.hi:hover{background:var(--card);color:var(--tx)}
+.sb-ft{border-top:1px solid var(--bd);padding-top:12px}
+.uchip{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:9px}
+.uav{width:31px;height:31px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--a),var(--a2));
+  display:flex;align-items:center;justify-content:center;font-size:.73rem;font-weight:700;color:#fff}
+.un{font-size:.78rem;color:var(--tx)}
+.up{font-size:.62rem;color:var(--mu)}
+.lout{margin-left:auto;background:none;border:none;color:var(--mu);cursor:pointer;
+  padding:3px 6px;border-radius:5px;font-size:.75rem;transition:color var(--tr)}
+.lout:hover{color:var(--a3)}
+.chat-main{display:flex;flex-direction:column;height:100vh;
+  transition:margin-left var(--tr),width var(--tr);width:100%}
+.chat-main.sh{margin-left:256px;width:calc(100% - 256px)}
+.ch-head{display:flex;align-items:center;gap:12px;padding:14px 22px;
+  border-bottom:1px solid var(--bd);background:rgba(5,5,8,.88);
+  backdrop-filter:blur(14px);position:sticky;top:0;z-index:5}
+.mbtn{background:none;border:none;color:var(--mu);cursor:pointer;padding:5px;
+  border-radius:7px;display:flex;align-items:center;transition:color var(--tr),background var(--tr)}
+.mbtn:hover{color:var(--tx);background:var(--bd)}
+.mbadge{display:flex;align-items:center;gap:5px;background:rgba(108,99,255,.09);
+  border:1px solid rgba(108,99,255,.22);border-radius:99px;padding:3px 11px;
+  font-size:.68rem;color:var(--a);white-space:nowrap}
+.sdot{width:6px;height:6px;border-radius:50%;background:#00e57a;animation:blink 2s infinite}
+.cht{font-family:var(--fh);font-size:.9rem;font-weight:700;color:var(--tx);flex:1;
+  overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.msgs{flex:1;overflow-y:auto;padding:28px 22px;display:flex;flex-direction:column;gap:24px;scroll-behavior:smooth}
+.msgs::-webkit-scrollbar{width:4px}
+.msgs::-webkit-scrollbar-thumb{background:var(--bd);border-radius:99px}
+
+/* welcome */
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:56vh;gap:18px;padding:34px 18px;text-align:center}
+.wlogo{font-family:var(--fh);font-size:clamp(2.4rem,6vw,4.2rem);font-weight:800;letter-spacing:-.04em;
+  background:linear-gradient(135deg,var(--a) 0%,var(--a2) 52%,var(--a3) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.wsub{color:var(--mu);font-size:.82rem;max-width:330px;line-height:1.72}
+.sg{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;width:min(500px,88vw);margin-top:6px}
+.sc{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);
+  padding:13px 15px;font-size:.75rem;color:var(--mu);cursor:pointer;text-align:left;line-height:1.55;
+  transition:border-color var(--tr),color var(--tr),background var(--tr),transform var(--tr)}
+.sc:hover{border-color:var(--a);color:var(--tx);background:rgba(108,99,255,.07);transform:translateY(-2px)}
+.si{font-size:1.15rem;margin-bottom:5px;display:block}
+
+/* bubbles */
+.msg{display:flex;gap:12px;max-width:800px;margin:0 auto;width:100%;
+  animation:min .32s cubic-bezier(.4,0,.2,1) both}
+@keyframes min{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.msg.user{flex-direction:row-reverse}
+.mav{width:32px;height:32px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:.74rem;font-weight:700}
+.msg.ai .mav{background:linear-gradient(135deg,var(--a),var(--a2));color:#fff;box-shadow:0 0 14px var(--glow)}
+.msg.user .mav{background:linear-gradient(135deg,var(--a3),#ff8c42);color:#fff}
+.mbody{flex:1;min-width:0}
+.mname{font-size:.66rem;color:var(--mu);margin-bottom:5px;letter-spacing:.06em}
+.msg.user .mname{text-align:right}
+.mbub{display:inline-block;padding:13px 17px;border-radius:18px;
+  font-size:.855rem;line-height:1.78;max-width:100%;word-break:break-word}
+.msg.ai .mbub{background:var(--card);border:1px solid var(--bd);color:var(--tx);border-top-left-radius:4px}
+.msg.user .mbub{background:linear-gradient(135deg,var(--a),#4540d4);color:#fff;
+  border-top-right-radius:4px;margin-left:auto;display:block}
+.mbub pre{background:var(--sf);border:1px solid var(--bd);border-radius:9px;
+  padding:13px 15px;overflow-x:auto;margin:9px 0;font-size:.78rem;line-height:1.62}
+.mbub code{font-family:var(--fm)}
+.mbub p{margin-bottom:.55em}
+.mbub p:last-child{margin-bottom:0}
+.mbub strong{color:var(--a2)}
+.mbub em{color:var(--a3)}
+.mbub ul,.mbub ol{padding-left:1.3em;margin:.45em 0}
+.mbub li{margin:.22em 0}
+.mbub h1,.mbub h2,.mbub h3{font-family:var(--fh);margin:.6em 0 .35em;color:var(--tx)}
+
+/* typing */
+.typing .mbub{display:flex;gap:5px;align-items:center;padding:15px 18px}
+.td{width:7px;height:7px;border-radius:50%;background:var(--a);animation:tb 1.2s ease-in-out infinite}
+.td:nth-child(2){animation-delay:.15s;background:var(--a2)}
+.td:nth-child(3){animation-delay:.3s;background:var(--a3)}
+@keyframes tb{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-8px)}}
+
+/* input */
+.inp-area{padding:14px 22px 22px;background:rgba(5,5,8,.94);backdrop-filter:blur(14px);border-top:1px solid var(--bd)}
+.inp-box{display:flex;align-items:flex-end;gap:11px;background:var(--card);border:1px solid var(--bd);
+  border-radius:18px;padding:13px 15px;max-width:800px;margin:0 auto;
+  transition:border-color var(--tr),box-shadow var(--tr)}
+.inp-box:focus-within{border-color:var(--a);box-shadow:0 0 0 3px rgba(108,99,255,.12),0 0 28px rgba(108,99,255,.07)}
+.ta{flex:1;background:none;border:none;outline:none;color:var(--tx);font-family:var(--fm);
+  font-size:.855rem;line-height:1.6;resize:none;min-height:22px;max-height:160px;overflow-y:auto}
+.ta::placeholder{color:var(--mu)}
+.sbtn{width:37px;height:37px;border-radius:50%;background:linear-gradient(135deg,var(--a),#4540d4);
+  border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
+  transition:transform var(--tr),box-shadow var(--tr),opacity var(--tr);
+  box-shadow:0 4px 16px rgba(108,99,255,.35)}
+.sbtn:hover:not(:disabled){transform:scale(1.1);box-shadow:0 6px 20px rgba(108,99,255,.5)}
+.sbtn:disabled{opacity:.34;cursor:not-allowed}
+.inp-foot{text-align:center;font-size:.64rem;color:var(--mu);margin-top:8px;
+  max-width:800px;margin-left:auto;margin-right:auto}
+
+@media(max-width:600px){
+  .login-card{padding:34px 24px}
+  .sg{grid-template-columns:1fr}
+  .msgs{padding:18px 12px}
+  .inp-area{padding:10px 12px 18px}
+  .sidebar{width:240px}
+}
+</style>
+</head>
+<body>
+<div id="noise"></div>
+
+<!-- PAGE 1: LOADING -->
+<div class="page on" id="pg-load">
+  <div class="g-grid"></div>
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+  <div class="orb"><div class="orb-c"></div></div>
+  <div class="ld-logo" data-t="Rapzy-GPT">Rapzy-GPT</div>
+  <div class="ld-tag">Initializing Neural Engine...</div>
+  <div class="bar-w"><div class="bar-f" id="bar"></div></div>
+  <div class="ld-st" id="lst">Connecting to AI core...</div>
+</div>
+
+<!-- PAGE 2: LOGIN -->
+<div class="page" id="pg-login">
+  <div class="g-grid"></div>
+  <div class="blob b1"></div><div class="blob b2"></div>
+  <div class="login-card">
+    <div class="badge"><span class="bdot"></span>Rapzy-GPT v2.0</div>
+    <div class="l-title">Selamat Datang</div>
+    <div class="l-sub">Masukkan kredensial akun kamu untuk mulai menggunakan Rapzy-GPT.</div>
+    <div class="fg">
+      <label class="fl">Username</label>
+      <input class="fi" id="fi-u" type="text" placeholder="masukkan username..." autocomplete="off"/>
+    </div>
+    <div class="fg">
+      <label class="fl">Password</label>
+      <input class="fi" id="fi-p" type="password" placeholder="••••••••"/>
+    </div>
+    <button class="btn-login" onclick="doLogin()">Masuk ke Rapzy-GPT &nbsp;→</button>
+    <div class="l-err" id="lerr"></div>
+  </div>
+</div>
+
+<!-- PAGE 3: CHAT -->
+<div class="page" id="pg-chat">
+  <div class="sidebar" id="sb">
+    <div class="sb-logo">⚡ Rapzy-GPT</div>
+    <button class="new-c" onclick="newChat()">＋ &nbsp;New Chat</button>
+    <div class="sb-hist" id="sb-hist"></div>
+    <div class="sb-ft">
+      <div class="uchip">
+        <div class="uav" id="uav">A</div>
+        <div>
+          <div class="un" id="uname">admin</div>
+          <div class="up">Pro · Unlimited</div>
+        </div>
+        <button class="lout" onclick="doLogout()">✕ Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-main" id="cm">
+    <div class="ch-head">
+      <button class="mbtn" onclick="toggleSb()">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <div class="mbadge"><span class="sdot"></span>Rapzy Neural v2</div>
+      <div class="cht" id="cht">Chat baru</div>
+    </div>
+    <div class="msgs" id="msgs"></div>
+    <div class="inp-area">
+      <div class="inp-box">
+        <textarea class="ta" id="ta" rows="1"
+          placeholder="Tanyakan apa saja ke Rapzy-GPT..."
+          onkeydown="hkey(event)" oninput="resize(this)"></textarea>
+        <button class="sbtn" id="sbtn" onclick="send()">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="#fff">
+            <path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/>
+          </svg>
+        </button>
+      </div>
+      <div class="inp-foot">Rapzy-GPT dapat membuat kesalahan. &nbsp;|&nbsp; Powered by Claude AI</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── CONFIG ── */
+const USERS   = { admin: "adminR" };
+const API_URL = "/api/chat"; // Vercel API Route
+
+const LOAD_MSGS = [
+  "Connecting to AI core...",
+  "Loading language model...",
+  "Warming up neural engine...",
+  "Calibrating response system...",
+  "Almost ready...",
+];
+const SUGGS = [
+  { i:"💻", t:"Bantu aku debug kode Python yang error" },
+  { i:"✍️", t:"Tulis email profesional untuk klien baru" },
+  { i:"🧠", t:"Jelaskan konsep machine learning dengan mudah" },
+  { i:"🚀", t:"Buat landing page keren dengan HTML & CSS" },
+];
+
+/* ── STATE ── */
+let CU="", hist=[], sessions=[], sbOpen=false, busy=false;
+
+/* ── PAGE ── */
+const pg = id => {
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("on"));
+  document.getElementById(id).classList.add("on");
+};
+
+/* ── LOADING ── */
+let pct=0;
+(function step(){
+  pct += Math.random()*17+5;
+  if(pct>100) pct=100;
+  document.getElementById("bar").style.width=pct+"%";
+  document.getElementById("lst").textContent =
+    pct>=100 ? "✓ System ready!" : LOAD_MSGS[Math.min(Math.floor(pct/22),4)];
+  if(pct<100) setTimeout(step, Math.random()*300+140);
+  else setTimeout(()=>{ pg("pg-login"); renderWelcome(); }, 700);
+})();
+
+/* ── LOGIN ── */
+function doLogin(){
+  const u=document.getElementById("fi-u").value.trim();
+  const p=document.getElementById("fi-p").value;
+  if(!u||!p){ showErr("Username dan password tidak boleh kosong."); return; }
+  if(!USERS[u]||USERS[u]!==p){ showErr("Username atau password salah."); return; }
+  document.getElementById("lerr").style.display="none";
+  CU=u;
+  document.getElementById("uname").textContent=u;
+  document.getElementById("uav").textContent=u.charAt(0).toUpperCase();
+  pg("pg-chat");
+  if(window.innerWidth>768) toggleSb(true);
+  document.getElementById("ta").focus();
+}
+function showErr(m){
+  const e=document.getElementById("lerr");
+  e.textContent="⚠️ "+m; e.style.display="block";
+}
+document.getElementById("fi-u").addEventListener("keydown",e=>{ if(e.key==="Enter") document.getElementById("fi-p").focus(); });
+document.getElementById("fi-p").addEventListener("keydown",e=>{ if(e.key==="Enter") doLogin(); });
+
+function doLogout(){
+  CU=""; hist=[]; sessions=[]; sbOpen=false; busy=false;
+  document.getElementById("sb").classList.remove("open");
+  document.getElementById("cm").classList.remove("sh");
+  document.getElementById("fi-u").value="";
+  document.getElementById("fi-p").value="";
+  document.getElementById("lerr").style.display="none";
+  renderWelcome();
+  pg("pg-login");
+}
+
+/* ── SIDEBAR ── */
+function toggleSb(force){
+  sbOpen = force!==undefined ? force : !sbOpen;
+  document.getElementById("sb").classList.toggle("open",sbOpen);
+  document.getElementById("cm").classList.toggle("sh",sbOpen);
+}
+function renderHist(){
+  document.getElementById("sb-hist").innerHTML=sessions.slice(0,24).map((s,i)=>
+    `<div class="hi" onclick="loadSess(${i})">💬 ${esc(s.title)}</div>`
+  ).join("");
+}
+function loadSess(i){
+  const s=sessions[i];
+  hist=[...s.hist];
+  document.getElementById("cht").textContent=s.title;
+  document.getElementById("msgs").innerHTML="";
+  s.bubbles.forEach(b=>addBubble(b.role,b.text,false));
+}
+
+/* ── WELCOME ── */
+function renderWelcome(){
+  document.getElementById("msgs").innerHTML=`
+    <div class="welcome" id="wlc">
+      <div class="wlogo">Rapzy-GPT</div>
+      <div class="wsub">AI cerdas siap bantu kamu coding, nulis, analisis, dan menjawab semua pertanyaanmu.</div>
+      <div class="sg">
+        ${SUGGS.map(s=>`<div class="sc" onclick="useSugg(this)"><span class="si">${s.i}</span>${esc(s.t)}</div>`).join("")}
+      </div>
+    </div>`;
+  document.getElementById("cht").textContent="Chat baru";
+}
+function newChat(){
+  if(hist.length>0){
+    const title=hist[0].content.slice(0,38)+(hist[0].content.length>38?"...":"");
+    const bubbles=[...document.getElementById("msgs").querySelectorAll(".msg")].map(el=>({
+      role:el.classList.contains("user")?"user":"ai",
+      text:el.querySelector(".mbub").innerText,
+    }));
+    sessions.unshift({title,hist:[...hist],bubbles});
+    renderHist();
+  }
+  hist=[];
+  renderWelcome();
+}
+function useSugg(el){
+  const c=el.cloneNode(true);
+  c.querySelector(".si")?.remove();
+  document.getElementById("ta").value=c.textContent.trim();
+  resize(document.getElementById("ta"));
+  send();
+}
+
+/* ── CHAT UTILS ── */
+function resize(el){ el.style.height="auto"; el.style.height=Math.min(el.scrollHeight,160)+"px"; }
+function hkey(e){ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); send(); } }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function fmt(raw){
+  return raw
+    .replace(/```(\w*)\n?([\s\S]*?)```/g,(_,l,c)=>`<pre><code>${esc(c.trim())}</code></pre>`)
+    .replace(/`([^`\n]+)`/g,"<code>$1</code>")
+    .replace(/\*\*\*(.+?)\*\*\*/g,"<strong><em>$1</em></strong>")
+    .replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g,"<em>$1</em>")
+    .replace(/^### (.+)$/gm,"<h3>$1</h3>")
+    .replace(/^## (.+)$/gm,"<h2>$1</h2>")
+    .replace(/^# (.+)$/gm,"<h1>$1</h1>")
+    .replace(/^[-*] (.+)$/gm,"<li>$1</li>")
+    .replace(/(<li>[\s\S]*?<\/li>)/g,"<ul>$1</ul>")
+    .replace(/\n\n/g,"</p><p>")
+    .replace(/\n/g,"<br>");
+}
+
+function addBubble(role,text,anim=true){
+  document.getElementById("wlc")?.remove();
+  const msgs=document.getElementById("msgs");
+  const d=document.createElement("div");
+  d.className=`msg ${role}`;
+  if(!anim) d.style.animation="none";
+  const av=role==="user"?(CU.charAt(0).toUpperCase()||"U"):"⚡";
+  const nm=role==="user"?(CU||"User"):"Rapzy-GPT";
+  d.innerHTML=`
+    <div class="mav">${av}</div>
+    <div class="mbody">
+      <div class="mname">${esc(nm)}</div>
+      <div class="mbub">${role==="ai"?fmt(text):esc(text)}</div>
+    </div>`;
+  msgs.appendChild(d);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+function showTyping(){
+  document.getElementById("wlc")?.remove();
+  const msgs=document.getElementById("msgs");
+  const d=document.createElement("div");
+  d.className="msg ai typing"; d.id="typind";
+  d.innerHTML=`<div class="mav">⚡</div><div class="mbody"><div class="mname">Rapzy-GPT</div><div class="mbub"><div class="td"></div><div class="td"></div><div class="td"></div></div></div>`;
+  msgs.appendChild(d);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+function hideTyping(){ document.getElementById("typind")?.remove(); }
+
+/* ── SEND ── */
+async function send(){
+  if(busy) return;
+  const ta=document.getElementById("ta");
+  const text=ta.value.trim();
+  if(!text) return;
+  ta.value=""; ta.style.height="auto";
+
+  if(hist.length===0)
+    document.getElementById("cht").textContent=text.slice(0,42)+(text.length>42?"...":"");
+
+  addBubble("user",text);
+  hist.push({role:"user",content:text});
+  busy=true;
+  document.getElementById("sbtn").disabled=true;
+  showTyping();
+
+  try{
+    const res=await fetch(API_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({messages:hist,username:CU}),
+    });
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.error||"Server error "+res.status);
+    hideTyping();
+    addBubble("ai",data.text);
+    hist.push({role:"assistant",content:data.text});
+  }catch(err){
+    hideTyping();
+    addBubble("ai",`⚠️ **Error:** ${err.message}\n\nPastikan env variable \`ANTHROPIC_API_KEY\` sudah di-set di Vercel dashboard.`);
+  }
+
+  busy=false;
+  document.getElementById("sbtn").disabled=false;
+  ta.focus();
+}
+
+renderWelcome();
+</script>
+</body>
+</html>
